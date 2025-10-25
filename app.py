@@ -115,5 +115,30 @@ def download_recording(recording_id):
             return send_file(recording["audio_path"], as_attachment=True)
     return jsonify({"error": "Recording not found"}), 404
 
+
+@app.route('/delete/<recording_id>', methods=['DELETE'])
+def delete_recording(recording_id):
+    history = load_history()
+    updated_recordings = []
+    deleted = False
+
+    for recording in history["recordings"]:
+        if recording["id"] == recording_id:
+            # Delete the audio file
+            if os.path.exists(recording["audio_path"]):
+                os.remove(recording["audio_path"])
+            deleted = True
+        else:
+            updated_recordings.append(recording)
+
+    if deleted:
+        history["recordings"] = updated_recordings
+        save_history(history)
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False, "error": "Recording not found"}), 404
+
+
+
 if __name__ == "__main__":
     app.run(debug=True)

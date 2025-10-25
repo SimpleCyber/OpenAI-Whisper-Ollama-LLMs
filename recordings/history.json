@@ -1,16 +1,6 @@
 {
   "recordings": [
     {
-      "id": "3e235b80-0a1d-4935-a3ee-4f5aa5cc74c9",
-      "filename": "recording_20251026_020904.wav",
-      "audio_path": "recordings\\audio\\recording_20251026_020904.wav",
-      "transcription": " do",
-      "timestamp": "2025-10-26T02:09:04.106311",
-      "duration": "0:22",
-      "language": "en",
-      "model": "tiny.en"
-    },
-    {
       "id": "ce5b9031-c00c-490b-8020-b14af5d8be6b",
       "filename": "recording_20251026_020603.wav",
       "audio_path": "recordings\\audio\\recording_20251026_020603.wav",
@@ -29,15 +19,6 @@
       "duration": "0:07",
       "language": "en",
       "model": "tiny.en"
-    },
-    {
-      "id": "7f39a63a-c581-480c-88fb-5c33dd4b8434",
-      "filename": "recording_20251026_011725.wav",
-      "audio_path": "recordings\\audio\\recording_20251026_011725.wav",
-      "transcription": " No, not did. I want to say goodbye.",
-      "timestamp": "2025-10-26T01:17:25.860621",
-      "duration": "0:06",
-      "language": "en"
     },
     {
       "id": "6377b090-984c-451f-b8ae-b5b2f5e14bf5",
