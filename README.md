@@ -2,6 +2,8 @@
 
 A beautiful, modern voice recording application with real-time transcription using OpenAI's Whisper AI model. Features a minimalist UI with dark/light mode, recording history, and multiple model support.
 
+<img width="1919" height="920" alt="image" src="https://github.com/user-attachments/assets/31815fd5-a350-4aba-bb26-a452b360361a" />
+
 
 
 ## ✨ Features
