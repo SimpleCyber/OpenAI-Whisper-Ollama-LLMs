@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Recorder with Transcription</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @keyframes recording-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .recording-dot {
+      animation: recording-pulse 2s ease-in-out infinite;
+    }
+    .sidebar-transition {
+      transition: transform 0.3s ease-in-out;
+    }
+    .dark {
+      color-scheme: dark;
+    }
+  </style>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-200">
+  
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar-transition fixed left-0 top-0 h-full w-80 bg-white dark:bg-neutral-800 border-r border-neutral-200 dark:border-neutral-700 shadow-lg z-50 -translate-x-full">
+    <div class="flex flex-col h-full">
+      <!-- Sidebar Header -->
+      <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-medium text-neutral-800 dark:text-neutral-100">Recording History</h2>
+          <button id="closeSidebar" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p class="text-xs text-neutral-500 dark:text-neutral-400">Your saved recordings</p>
+      </div>
+      
+      <!-- History List -->
+      <div id="historyList" class="flex-1 overflow-y-auto p-4">
+        <div class="text-center text-neutral-400 dark:text-neutral-500 py-8">
+          <i class="fas fa-history text-3xl mb-2"></i>
+          <p class="text-sm">No recordings yet</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div id="overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+
+  <!-- Main Content -->
+  <div class="min-h-screen flex flex-col">
+    
+    <!-- Top Bar -->
+    <div class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-6 py-4 flex items-center justify-between">
+      <button id="toggleSidebar" class="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
+        <i class="fas fa-bars text-xl"></i>
+      </button>
+      
+      <button id="themeToggle" class="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors flex items-center justify-center">
+        <i class="fas fa-moon dark:hidden"></i>
+        <i class="fas fa-sun hidden dark:inline"></i>
+      </button>
+    </div>
+
+    <!-- Main Recorder Area -->
+    <div class="flex-1 flex items-center justify-center p-6">
+      <div class="max-w-xl w-full">
+        
+        <!-- Header -->
+        <div class="text-center mb-12">
+          <h1 class="text-3xl font-light text-neutral-800 dark:text-neutral-100 mb-2">Voice Recorder</h1>
+          <p class="text-sm text-neutral-500 dark:text-neutral-400">Record and transcribe audio</p>
+        </div>
+
+        <!-- Main Control Area -->
+        <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-10">
+          
+          <!-- Timer Display -->
+          <div id="timer" class="hidden text-center mb-8">
+            <span class="text-6xl font-light text-neutral-800 dark:text-neutral-100 tracking-tight">00:00</span>
+          </div>
+
+          <!-- Status Indicator -->
+          <div id="status" class="text-center mb-8 h-6">
+            <div id="idleStatus" class="flex items-center justify-center gap-2 text-neutral-400 dark:text-neutral-500">
+              <i class="fas fa-microphone text-sm"></i>
+              <span class="text-sm">Ready to record</span>
+            </div>
+            <div id="recordingStatus" class="hidden flex items-center justify-center gap-2 text-red-500">
+              <span class="recording-dot w-2 h-2 bg-red-500 rounded-full"></span>
+              <span class="text-sm font-medium">Recording</span>
+            </div>
+            <div id="pausedStatus" class="hidden flex items-center justify-center gap-2 text-amber-500">
+              <i class="fas fa-pause text-sm"></i>
+              <span class="text-sm">Paused</span>
+            </div>
+            <div id="processingStatus" class="hidden flex items-center justify-center gap-2 text-blue-500">
+              <i class="fas fa-spinner fa-spin text-sm"></i>
+              <span class="text-sm">Processing</span>
+            </div>
+          </div>
+
+          <!-- Control Buttons -->
+          <div class="flex items-center justify-center gap-4">
+            
+            <!-- Start Button -->
+            <button id="startBtn" class="w-16 h-16 rounded-full bg-neutral-800 dark:bg-neutral-700 text-white hover:bg-neutral-900 dark:hover:bg-neutral-600 transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md">
+              <i class="fas fa-microphone text-xl"></i>
+            </button>
+
+            <!-- Pause Button -->
+            <button id="pauseBtn" disabled class="hidden w-12 h-12 rounded-full bg-amber-500 text-white hover:bg-amber-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
+              <i class="fas fa-pause"></i>
+            </button>
+
+            <!-- Resume Button -->
+            <button id="resumeBtn" disabled class="hidden w-12 h-12 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
+              <i class="fas fa-play text-sm"></i>
+            </button>
+
+            <!-- Stop Button -->
+            <button id="stopBtn" disabled class="hidden w-12 h-12 rounded-full bg-neutral-300 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-400 dark:hover:bg-neutral-500 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
+              <i class="fas fa-stop"></i>
+            </button>
+
+          </div>
+
+        </div>
+
+        <!-- Transcription Box -->
+        <div id="transcriptionBox" class="hidden mt-6">
+          <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-8">
+            <div class="flex items-center gap-2 mb-4 text-neutral-700 dark:text-neutral-300">
+              <i class="fas fa-align-left text-sm"></i>
+              <h3 class="text-sm font-medium uppercase tracking-wide">Transcription</h3>
+            </div>
+            <div id="transcription" class="text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
+      <div class="p-6 border-b border-neutral-200 dark:border-neutral-700 flex items-center justify-between">
+        <h3 class="text-xl font-medium text-neutral-800 dark:text-neutral-100">Recording Details</h3>
+        <button id="closeModal" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+          <i class="fas fa-times text-xl"></i>
+        </button>
+      </div>
+      <div id="modalContent" class="p-6 overflow-y-auto max-h-[calc(80vh-80px)]"></div>
+    </div>
+  </div>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+    let startTime;
+    let timerInterval;
+    let isDark = localStorage.getItem('theme') === 'dark';
+
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resumeBtn = document.getElementById("resumeBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const transcriptionDiv = document.getElementById("transcription");
+    const transcriptionBox = document.getElementById("transcriptionBox");
+    const timer = document.getElementById("timer");
+    
+    const idleStatus = document.getElementById("idleStatus");
+    const recordingStatus = document.getElementById("recordingStatus");
+    const pausedStatus = document.getElementById("pausedStatus");
+    const processingStatus = document.getElementById("processingStatus");
+
+    const sidebar = document.getElementById("sidebar");
+    const overlay = document.getElementById("overlay");
+    const toggleSidebar = document.getElementById("toggleSidebar");
+    const closeSidebar = document.getElementById("closeSidebar");
+    const themeToggle = document.getElementById("themeToggle");
+    const historyList = document.getElementById("historyList");
+    const detailModal = document.getElementById("detailModal");
+    const closeModal = document.getElementById("closeModal");
+    const modalContent = document.getElementById("modalContent");
+
+    // Theme Toggle
+    function updateTheme() {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    }
+
+    themeToggle.onclick = () => {
+      isDark = !isDark;
+      updateTheme();
+    };
+
+    updateTheme();
+
+    // Sidebar Toggle
+    toggleSidebar.onclick = () => {
+      sidebar.classList.remove('-translate-x-full');
+      overlay.classList.remove('hidden');
+      loadHistory();
+    };
+
+    closeSidebar.onclick = () => {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    };
+
+    overlay.onclick = () => {
+      sidebar.classList.add('-translate-x-full');
+      overlay.classList.add('hidden');
+    };
+
+    // Load History
+    async function loadHistory() {
+      try {
+        const response = await fetch('/history');
+        const data = await response.json();
+        
+        if (data.recordings && data.recordings.length > 0) {
+          historyList.innerHTML = data.recordings.map(recording => `
+            <div class="mb-3 p-4 bg-neutral-50 dark:bg-neutral-700 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-neutral-300 dark:hover:border-neutral-500 transition-colors cursor-pointer" onclick="showDetail('${recording.id}')">
+              <div class="flex items-start justify-between mb-2">
+                <div class="flex-1">
+                  <div class="text-sm font-medium text-neutral-800 dark:text-neutral-100 mb-1">${recording.filename}</div>
+                  <div class="text-xs text-neutral-500 dark:text-neutral-400">${new Date(recording.timestamp).toLocaleString()}</div>
+                </div>
+                <i class="fas fa-chevron-right text-neutral-400 text-xs mt-1"></i>
+              </div>
+              <div class="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2">${recording.transcription}</div>
+              <div class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Duration: ${recording.duration}</div>
+            </div>
+          `).join('');
+        } else {
+          historyList.innerHTML = `
+            <div class="text-center text-neutral-400 dark:text-neutral-500 py-8">
+              <i class="fas fa-history text-3xl mb-2"></i>
+              <p class="text-sm">No recordings yet</p>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error('Error loading history:', error);
+      }
+    }
+
+    // Show Detail Modal
+    async function showDetail(id) {
+      try {
+        const response = await fetch(`/recording/${id}`);
+        const recording = await response.json();
+        
+        modalContent.innerHTML = `
+          <div class="space-y-4">
+            <div>
+              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Filename</label>
+              <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.filename}</p>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Timestamp</label>
+              <p class="text-neutral-800 dark:text-neutral-100 mt-1">${new Date(recording.timestamp).toLocaleString()}</p>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Duration</label>
+              <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.duration}</p>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Audio File</label>
+              <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.audio_path}</p>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Transcription</label>
+              <div class="mt-2 p-4 bg-neutral-50 dark:bg-neutral-700 rounded-lg text-neutral-700 dark:text-neutral-300 leading-relaxed">${recording.transcription}</div>
+            </div>
+            <div class="flex gap-2">
+              <a href="/download/${recording.id}" class="flex-1 text-center px-4 py-2 bg-neutral-800 dark:bg-neutral-700 text-white rounded-lg hover:bg-neutral-900 dark:hover:bg-neutral-600 transition-colors">
+                <i class="fas fa-download mr-2"></i>Download Audio
+              </a>
+            </div>
+          </div>
+        `;
+        
+        detailModal.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error loading recording details:', error);
+      }
+    }
+
+    closeModal.onclick = () => {
+      detailModal.classList.add('hidden');
+    };
+
+    function setStatus(status) {
+      idleStatus.classList.add('hidden');
+      recordingStatus.classList.add('hidden');
+      pausedStatus.classList.add('hidden');
+      processingStatus.classList.add('hidden');
+      
+      if (status === 'idle') idleStatus.classList.remove('hidden');
+      if (status === 'recording') recordingStatus.classList.remove('hidden');
+      if (status === 'paused') pausedStatus.classList.remove('hidden');
+      if (status === 'processing') processingStatus.classList.remove('hidden');
+    }
+
+    function updateTimer() {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+      const seconds = (elapsed % 60).toString().padStart(2, '0');
+      timer.textContent = `${minutes}:${seconds}`;
+    }
+
+    startBtn.onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+        mediaRecorder.onstop = async () => {
+          clearInterval(timerInterval);
+          const blob = new Blob(audioChunks, { type: 'audio/wav' });
+          const formData = new FormData();
+          formData.append('audio', blob, `recording_${Date.now()}.wav`);
+
+          setStatus('processing');
+          transcriptionBox.classList.remove('hidden');
+          transcriptionDiv.textContent = 'Transcribing your audio...';
+
+          const response = await fetch('/upload', { method: 'POST', body: formData });
+          const data = await response.json();
+
+          if (data.transcription) {
+            transcriptionDiv.textContent = data.transcription;
+            setStatus('idle');
+            loadHistory();
+          } else {
+            transcriptionDiv.textContent = 'Unable to transcribe audio. Please try again.';
+            setStatus('idle');
+          }
+
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 1000);
+
+        startBtn.classList.add('hidden');
+        pauseBtn.classList.remove('hidden');
+        stopBtn.classList.remove('hidden');
+        pauseBtn.disabled = false;
+        stopBtn.disabled = false;
+        
+        timer.classList.remove('hidden');
+        setStatus('recording');
+        transcriptionBox.classList.add('hidden');
+
+      } catch (err) {
+        alert('Microphone access denied. Please allow microphone access to record.');
+        console.error('Error accessing microphone:', err);
+      }
+    };
+
+    pauseBtn.onclick = () => {
+      if (mediaRecorder.state === "recording") {
+        mediaRecorder.pause();
+        clearInterval(timerInterval);
+        pauseBtn.classList.add('hidden');
+        resumeBtn.classList.remove('hidden');
+        resumeBtn.disabled = false;
+        setStatus('paused');
+      }
+    };
+
+    resumeBtn.onclick = () => {
+      if (mediaRecorder.state === "paused") {
+        mediaRecorder.resume();
+        startTime = Date.now() - (parseInt(timer.textContent.split(':')[0]) * 60 + parseInt(timer.textContent.split(':')[1])) * 1000;
+        timerInterval = setInterval(updateTimer, 1000);
+        resumeBtn.classList.add('hidden');
+        pauseBtn.classList.remove('hidden');
+        pauseBtn.disabled = false;
+        setStatus('recording');
+      }
+    };
+
+    stopBtn.onclick = () => {
+      mediaRecorder.stop();
+      startBtn.classList.remove('hidden');
+      pauseBtn.classList.add('hidden');
+      resumeBtn.classList.add('hidden');
+      stopBtn.classList.add('hidden');
+      pauseBtn.disabled = true;
+      resumeBtn.disabled = true;
+      stopBtn.disabled = true;
+      timer.classList.add('hidden');
+      timer.textContent = '00:00';
+    };
+
+    // Initial load
+    loadHistory();
+  </script>
+</body>
+</html>

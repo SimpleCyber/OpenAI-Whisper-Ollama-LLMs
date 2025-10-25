@@ -1,0 +1,22 @@
+{
+  "recordings": [
+    {
+      "id": "7f39a63a-c581-480c-88fb-5c33dd4b8434",
+      "filename": "recording_20251026_011725.wav",
+      "audio_path": "recordings\\audio\\recording_20251026_011725.wav",
+      "transcription": " No, not did. I want to say goodbye.",
+      "timestamp": "2025-10-26T01:17:25.860621",
+      "duration": "0:06",
+      "language": "en"
+    },
+    {
+      "id": "6377b090-984c-451f-b8ae-b5b2f5e14bf5",
+      "filename": "recording_20251026_011656.wav",
+      "audio_path": "recordings\\audio\\recording_20251026_011656.wav",
+      "transcription": " Hello my sister Tamadou and I hope you are working great time dot English",
+      "timestamp": "2025-10-26T01:16:56.248949",
+      "duration": "0:06",
+      "language": "en"
+    }
+  ]
+}
