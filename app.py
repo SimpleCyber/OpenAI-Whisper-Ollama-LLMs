@@ -12,11 +12,23 @@ HISTORY_FILE = os.path.join(UPLOAD_FOLDER, "history.json")
 
 os.makedirs(AUDIO_FOLDER, exist_ok=True)
 
-# Load the Whisper model
-print("🔊 Loading Whisper model...")
+# Model cache
 model_cache = r"D:\whisper_models"
 os.makedirs(model_cache, exist_ok=True)
-model = whisper.load_model("tiny.en", download_root=model_cache)
+
+# Cache for loaded models
+loaded_models = {}
+
+def get_model(model_name):
+    """Load and cache Whisper models"""
+    if model_name not in loaded_models:
+        print(f"🔊 Loading Whisper model: {model_name}...")
+        loaded_models[model_name] = whisper.load_model(model_name, download_root=model_cache)
+    return loaded_models[model_name]
+
+# Load default model
+print("🔊 Loading default Whisper model...")
+get_model("small")
 
 # Load or initialize history
 def load_history():
@@ -36,6 +48,8 @@ def index():
 @app.route('/upload', methods=['POST'])
 def upload_audio():
     file = request.files['audio']
+    model_name = request.form.get('model', 'small')
+    
     if file:
         # Generate unique ID and filename
         recording_id = str(uuid.uuid4())
@@ -45,6 +59,9 @@ def upload_audio():
         
         # Save audio file
         file.save(filepath)
+        
+        # Get the appropriate model
+        model = get_model(model_name)
         
         # Transcribe
         result = model.transcribe(filepath, fp16=False)
@@ -63,7 +80,8 @@ def upload_audio():
             "transcription": transcription,
             "timestamp": timestamp,
             "duration": duration,
-            "language": result.get("language", "unknown")
+            "language": result.get("language", "unknown"),
+            "model": model_name
         }
         history["recordings"].insert(0, recording_data)  # Add to beginning
         save_history(history)
@@ -71,7 +89,8 @@ def upload_audio():
         return jsonify({
             "transcription": transcription,
             "id": recording_id,
-            "filename": filename
+            "filename": filename,
+            "model": model_name
         })
     return jsonify({"error": "No file received"}), 400
 

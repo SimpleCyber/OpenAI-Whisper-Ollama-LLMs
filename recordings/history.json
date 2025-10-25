@@ -1,6 +1,16 @@
 {
   "recordings": [
     {
+      "id": "7ea34201-dad7-409b-9777-8ed8ece5d272",
+      "filename": "recording_20251026_013257.wav",
+      "audio_path": "recordings\\audio\\recording_20251026_013257.wav",
+      "transcription": " Hello, I am starting my voice recording, taking 2k1 to 3.",
+      "timestamp": "2025-10-26T01:32:57.115380",
+      "duration": "0:07",
+      "language": "en",
+      "model": "tiny.en"
+    },
+    {
       "id": "7f39a63a-c581-480c-88fb-5c33dd4b8434",
       "filename": "recording_20251026_011725.wav",
       "audio_path": "recordings\\audio\\recording_20251026_011725.wav",

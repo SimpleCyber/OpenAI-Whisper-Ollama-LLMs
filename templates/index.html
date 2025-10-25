@@ -20,6 +20,18 @@
     .dark {
       color-scheme: dark;
     }
+    .aurora-bg {
+      background: 
+        linear-gradient(135deg, 
+          rgba(248,250,252,1) 0%, 
+          rgba(219,234,254,0.7) 30%, 
+          rgba(165,180,252,0.5) 60%, 
+          rgba(129,140,248,0.6) 100%
+        ),
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.6) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(199,210,254,0.4) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(224,231,255,0.3) 0%, transparent 60%);
+    }
   </style>
   <script>
     tailwind.config = {
@@ -27,126 +39,154 @@
     }
   </script>
 </head>
-<body class="min-h-screen bg-neutral-50 dark:bg-neutral-900 transition-colors duration-200">
+<body class="min-h-screen relative overflow-hidden">
   
-  <!-- Sidebar -->
-  <div id="sidebar" class="sidebar-transition fixed left-0 top-0 h-full w-80 bg-white dark:bg-neutral-800 border-r border-neutral-200 dark:border-neutral-700 shadow-lg z-50 -translate-x-full">
-    <div class="flex flex-col h-full">
-      <!-- Sidebar Header -->
-      <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
-        <div class="flex items-center justify-between mb-2">
-          <h2 class="text-lg font-medium text-neutral-800 dark:text-neutral-100">Recording History</h2>
-          <button id="closeSidebar" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
-            <i class="fas fa-times"></i>
+  <!-- Aurora Background (Light Mode) -->
+  <div class="aurora-bg dark:hidden absolute inset-0 z-0"></div>
+  
+  <!-- Dark Mode Background -->
+  <div class="hidden dark:block absolute inset-0 z-0 bg-neutral-900"></div>
+
+  <!-- Content Wrapper -->
+  <div class="relative z-10 min-h-screen">
+    
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar-transition fixed left-0 top-0 h-full w-80 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-md border-r border-neutral-200/50 dark:border-neutral-700 shadow-lg z-50 -translate-x-full">
+      <div class="flex flex-col h-full">
+        <!-- Sidebar Header -->
+        <div class="p-6 border-b border-neutral-200/50 dark:border-neutral-700">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-medium text-neutral-800 dark:text-neutral-100">Recording History</h2>
+            <button id="closeSidebar" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">Your saved recordings</p>
+        </div>
+        
+        <!-- History List -->
+        <div id="historyList" class="flex-1 overflow-y-auto p-4">
+          <div class="text-center text-neutral-400 dark:text-neutral-500 py-8">
+            <i class="fas fa-history text-3xl mb-2"></i>
+            <p class="text-sm">No recordings yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+
+    <!-- Main Content -->
+    <div class="min-h-screen flex flex-col">
+      
+      <!-- Top Controls (Integrated) -->
+      <div class="px-6 py-6 flex items-center justify-between">
+        <button id="toggleSidebar" class="w-10 h-10 rounded-full bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 text-neutral-700 dark:text-neutral-300 hover:bg-white/80 dark:hover:bg-neutral-800/80 transition-colors flex items-center justify-center shadow-sm">
+          <i class="fas fa-bars"></i>
+        </button>
+        
+        <div class="flex items-center gap-3">
+          <!-- Model Selector -->
+          <select id="modelSelect" class="px-4 py-2 rounded-full bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 text-sm text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-400/50 transition-colors shadow-sm">
+            <!--  <option value="tiny.en">Tiny EN</option>
+            <option value="tiny">Tiny</option>
+            <option value="base.en">Base EN</option>
+            <option value="base">Base</option>
+            <option value="small.en">Small EN</option>
+            <option value="small" selected>Small</option>
+            <option value="medium.en">Medium EN</option> -->
+
+             <option value="tiny.en">Tiny EN</option>
+             <option value="small" selected>Small</option>
+
+          </select>
+
+          <!-- Theme Toggle -->
+          <button id="themeToggle" class="w-10 h-10 rounded-full bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 text-neutral-700 dark:text-neutral-300 hover:bg-white/80 dark:hover:bg-neutral-800/80 transition-colors flex items-center justify-center shadow-sm">
+            <i class="fas fa-moon dark:hidden"></i>
+            <i class="fas fa-sun hidden dark:inline"></i>
           </button>
         </div>
-        <p class="text-xs text-neutral-500 dark:text-neutral-400">Your saved recordings</p>
       </div>
-      
-      <!-- History List -->
-      <div id="historyList" class="flex-1 overflow-y-auto p-4">
-        <div class="text-center text-neutral-400 dark:text-neutral-500 py-8">
-          <i class="fas fa-history text-3xl mb-2"></i>
-          <p class="text-sm">No recordings yet</p>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Overlay -->
-  <div id="overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-40"></div>
-
-  <!-- Main Content -->
-  <div class="min-h-screen flex flex-col">
-    
-    <!-- Top Bar -->
-    <div class="bg-white dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 px-6 py-4 flex items-center justify-between">
-      <button id="toggleSidebar" class="text-neutral-700 dark:text-neutral-300 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors">
-        <i class="fas fa-bars text-xl"></i>
-      </button>
-      
-      <button id="themeToggle" class="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-colors flex items-center justify-center">
-        <i class="fas fa-moon dark:hidden"></i>
-        <i class="fas fa-sun hidden dark:inline"></i>
-      </button>
-    </div>
-
-    <!-- Main Recorder Area -->
-    <div class="flex-1 flex items-center justify-center p-6">
-      <div class="max-w-xl w-full">
-        
-        <!-- Header -->
-        <div class="text-center mb-12">
-          <h1 class="text-3xl font-light text-neutral-800 dark:text-neutral-100 mb-2">Voice Recorder</h1>
-          <p class="text-sm text-neutral-500 dark:text-neutral-400">Record and transcribe audio</p>
-        </div>
-
-        <!-- Main Control Area -->
-        <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-10">
+      <!-- Main Recorder Area -->
+      <div class="flex-1 flex items-center justify-center p-6">
+        <div class="max-w-xl w-full">
           
-          <!-- Timer Display -->
-          <div id="timer" class="hidden text-center mb-8">
-            <span class="text-6xl font-light text-neutral-800 dark:text-neutral-100 tracking-tight">00:00</span>
+          <!-- Header -->
+          <div class="text-center mb-12">
+            <h1 class="text-3xl font-light text-neutral-800 dark:text-neutral-100 mb-2">Voice Recorder</h1>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">Record and transcribe audio</p>
           </div>
 
-          <!-- Status Indicator -->
-          <div id="status" class="text-center mb-8 h-6">
-            <div id="idleStatus" class="flex items-center justify-center gap-2 text-neutral-400 dark:text-neutral-500">
-              <i class="fas fa-microphone text-sm"></i>
-              <span class="text-sm">Ready to record</span>
-            </div>
-            <div id="recordingStatus" class="hidden flex items-center justify-center gap-2 text-red-500">
-              <span class="recording-dot w-2 h-2 bg-red-500 rounded-full"></span>
-              <span class="text-sm font-medium">Recording</span>
-            </div>
-            <div id="pausedStatus" class="hidden flex items-center justify-center gap-2 text-amber-500">
-              <i class="fas fa-pause text-sm"></i>
-              <span class="text-sm">Paused</span>
-            </div>
-            <div id="processingStatus" class="hidden flex items-center justify-center gap-2 text-blue-500">
-              <i class="fas fa-spinner fa-spin text-sm"></i>
-              <span class="text-sm">Processing</span>
-            </div>
-          </div>
-
-          <!-- Control Buttons -->
-          <div class="flex items-center justify-center gap-4">
+          <!-- Main Control Area -->
+          <div class="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-md rounded-2xl shadow-lg border border-neutral-200/50 dark:border-neutral-700/50 p-10">
             
-            <!-- Start Button -->
-            <button id="startBtn" class="w-16 h-16 rounded-full bg-neutral-800 dark:bg-neutral-700 text-white hover:bg-neutral-900 dark:hover:bg-neutral-600 transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md">
-              <i class="fas fa-microphone text-xl"></i>
-            </button>
-
-            <!-- Pause Button -->
-            <button id="pauseBtn" disabled class="hidden w-12 h-12 rounded-full bg-amber-500 text-white hover:bg-amber-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
-              <i class="fas fa-pause"></i>
-            </button>
-
-            <!-- Resume Button -->
-            <button id="resumeBtn" disabled class="hidden w-12 h-12 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
-              <i class="fas fa-play text-sm"></i>
-            </button>
-
-            <!-- Stop Button -->
-            <button id="stopBtn" disabled class="hidden w-12 h-12 rounded-full bg-neutral-300 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-400 dark:hover:bg-neutral-500 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-sm hover:shadow-md">
-              <i class="fas fa-stop"></i>
-            </button>
-
-          </div>
-
-        </div>
-
-        <!-- Transcription Box -->
-        <div id="transcriptionBox" class="hidden mt-6">
-          <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-neutral-700 p-8">
-            <div class="flex items-center gap-2 mb-4 text-neutral-700 dark:text-neutral-300">
-              <i class="fas fa-align-left text-sm"></i>
-              <h3 class="text-sm font-medium uppercase tracking-wide">Transcription</h3>
+            <!-- Timer Display -->
+            <div id="timer" class="hidden text-center mb-8">
+              <span class="text-6xl font-light text-neutral-800 dark:text-neutral-100 tracking-tight">00:00</span>
             </div>
-            <div id="transcription" class="text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap"></div>
-          </div>
-        </div>
 
+            <!-- Status Indicator -->
+            <div id="status" class="text-center mb-8 h-6">
+              <div id="idleStatus" class="flex items-center justify-center gap-2 text-neutral-400 dark:text-neutral-500">
+                <i class="fas fa-microphone text-sm"></i>
+                <span class="text-sm">Ready to record</span>
+              </div>
+              <div id="recordingStatus" class="hidden flex items-center justify-center gap-2 text-red-500">
+                <span class="recording-dot w-2 h-2 bg-red-500 rounded-full"></span>
+                <span class="text-sm font-medium">Recording</span>
+              </div>
+              <div id="pausedStatus" class="hidden flex items-center justify-center gap-2 text-amber-500">
+                <i class="fas fa-pause text-sm"></i>
+                <span class="text-sm">Paused</span>
+              </div>
+              <div id="processingStatus" class="hidden flex items-center justify-center gap-2 text-blue-500">
+                <i class="fas fa-spinner fa-spin text-sm"></i>
+                <span class="text-sm">Processing</span>
+              </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="flex items-center justify-center gap-4">
+              
+              <!-- Start Button -->
+              <button id="startBtn" class="w-16 h-16 rounded-full bg-neutral-800 dark:bg-neutral-700 text-white hover:bg-neutral-900 dark:hover:bg-neutral-600 transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg">
+                <i class="fas fa-microphone text-xl"></i>
+              </button>
+
+              <!-- Pause Button -->
+              <button id="pauseBtn" disabled class="hidden w-12 h-12 rounded-full bg-amber-500 text-white hover:bg-amber-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg">
+                <i class="fas fa-pause"></i>
+              </button>
+
+              <!-- Resume Button -->
+              <button id="resumeBtn" disabled class="hidden w-12 h-12 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg">
+                <i class="fas fa-play text-sm"></i>
+              </button>
+
+              <!-- Stop Button -->
+              <button id="stopBtn" disabled class="hidden w-12 h-12 rounded-full bg-neutral-300 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-400 dark:hover:bg-neutral-500 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg">
+                <i class="fas fa-stop"></i>
+              </button>
+
+            </div>
+
+          </div>
+
+          <!-- Transcription Box -->
+          <div id="transcriptionBox" class="hidden mt-6">
+            <div class="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-md rounded-2xl shadow-lg border border-neutral-200/50 dark:border-neutral-700/50 p-8">
+              <div class="flex items-center gap-2 mb-4 text-neutral-700 dark:text-neutral-300">
+                <i class="fas fa-align-left text-sm"></i>
+                <h3 class="text-sm font-medium uppercase tracking-wide">Transcription</h3>
+              </div>
+              <div id="transcription" class="text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap"></div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   </div>
@@ -170,6 +210,7 @@
     let startTime;
     let timerInterval;
     let isDark = localStorage.getItem('theme') === 'dark';
+    let selectedModel = localStorage.getItem('whisperModel') || 'small';
 
     const startBtn = document.getElementById("startBtn");
     const pauseBtn = document.getElementById("pauseBtn");
@@ -189,6 +230,7 @@
     const toggleSidebar = document.getElementById("toggleSidebar");
     const closeSidebar = document.getElementById("closeSidebar");
     const themeToggle = document.getElementById("themeToggle");
+    const modelSelect = document.getElementById("modelSelect");
     const historyList = document.getElementById("historyList");
     const detailModal = document.getElementById("detailModal");
     const closeModal = document.getElementById("closeModal");
@@ -211,6 +253,13 @@
     };
 
     updateTheme();
+
+    // Model Selection
+    modelSelect.value = selectedModel;
+    modelSelect.onchange = (e) => {
+      selectedModel = e.target.value;
+      localStorage.setItem('whisperModel', selectedModel);
+    };
 
     // Sidebar Toggle
     toggleSidebar.onclick = () => {
@@ -237,7 +286,7 @@
         
         if (data.recordings && data.recordings.length > 0) {
           historyList.innerHTML = data.recordings.map(recording => `
-            <div class="mb-3 p-4 bg-neutral-50 dark:bg-neutral-700 rounded-lg border border-neutral-200 dark:border-neutral-600 hover:border-neutral-300 dark:hover:border-neutral-500 transition-colors cursor-pointer" onclick="showDetail('${recording.id}')">
+            <div class="mb-3 p-4 bg-gray-200 dark:bg-gray-100/5 rounded-lg hover:border dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer" onclick="showDetail('${recording.id}')">
               <div class="flex items-start justify-between mb-2">
                 <div class="flex-1">
                   <div class="text-sm font-medium text-neutral-800 dark:text-neutral-100 mb-1">${recording.filename}</div>
@@ -245,8 +294,11 @@
                 </div>
                 <i class="fas fa-chevron-right text-neutral-400 text-xs mt-1"></i>
               </div>
-              <div class="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2">${recording.transcription}</div>
-              <div class="mt-2 text-xs text-neutral-500 dark:text-neutral-400">Duration: ${recording.duration}</div>
+              <div class="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2 mb-2">${recording.transcription}</div>
+              <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                <span><i class="fas fa-clock mr-1"></i>${recording.duration}</span>
+                <span><i class="fas fa-brain mr-1"></i>${recording.model}</span>
+              </div>
             </div>
           `).join('');
         } else {
@@ -278,13 +330,23 @@
               <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Timestamp</label>
               <p class="text-neutral-800 dark:text-neutral-100 mt-1">${new Date(recording.timestamp).toLocaleString()}</p>
             </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Duration</label>
+                <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.duration}</p>
+              </div>
+              <div>
+                <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Model</label>
+                <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.model}</p>
+              </div>
+            </div>
             <div>
-              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Duration</label>
-              <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.duration}</p>
+              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Language</label>
+              <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.language}</p>
             </div>
             <div>
               <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Audio File</label>
-              <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.audio_path}</p>
+              <p class="text-neutral-800 dark:text-neutral-100 mt-1 text-sm break-all">${recording.audio_path}</p>
             </div>
             <div>
               <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Transcription</label>
@@ -340,6 +402,7 @@
           const blob = new Blob(audioChunks, { type: 'audio/wav' });
           const formData = new FormData();
           formData.append('audio', blob, `recording_${Date.now()}.wav`);
+          formData.append('model', selectedModel);
 
           setStatus('processing');
           transcriptionBox.classList.remove('hidden');
