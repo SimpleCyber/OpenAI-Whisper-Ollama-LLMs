@@ -31,7 +31,7 @@ AVAILABLE_OLLAMA_MODELS = ["gemma3:4b", "gemma3:270m"]
 
 # Initialize Chatterbox TTS (load once)
 print("🔊 Loading Chatterbox TTS model...")
-tts_model = ChatterboxTTS.from_pretrained(device="cpu")  # Change to "cuda" if GPU available
+tts_model = ChatterboxTTS.from_pretrained(device="cuda")
 print("✅ TTS model loaded successfully")
 
 # Available TTS voices (Chatterbox supports multiple speakers)
