@@ -1,6 +1,86 @@
 {
   "chats": [
     {
+      "id": "641092ff-224e-49a6-8e08-5f2a49104cd2",
+      "timestamp": "2025-10-26T15:41:28.264985",
+      "user_message": "ok",
+      "ai_response": "Okay, I'm ready to help you with your script. Please provide the context or the desired content. I'll do my best to create a compelling and engaging scene.\n",
+      "context": " So hello buddy, Myself Satyam Yadav and I am here for generating a script for a movie scene. Fight between Good and Evil on the Antarctica and volcanic land. Means the island is related to the fire. Fire and Arctic. Some like loofy fires. So island is half cold with the fire and half cold with the snow. Fighting between two legends on that island. I need the story around it.",
+      "model": "gemma3:270m",
+      "voice": "default",
+      "tts_file": "tts_9da427ee-7906-4b21-9f11-89f96a425d39.wav"
+    },
+    {
+      "id": "e1ba66d6-fdca-4882-8ff2-0809e60381b7",
+      "timestamp": "2025-10-26T15:40:23.421332",
+      "user_message": "Reformat this text to be more professional and clear",
+      "ai_response": "Okay, I understand. I will focus on improving the text to be more professional and clear.\n",
+      "context": " So hello buddy, Myself Satyam Yadav and I am here for generating a script for a movie scene. Fight between Good and Evil on the Antarctica and volcanic land. Means the island is related to the fire. Fire and Arctic. Some like loofy fires. So island is half cold with the fire and half cold with the snow. Fighting between two legends on that island. I need the story around it.",
+      "model": "gemma3:270m",
+      "voice": "default",
+      "tts_file": "tts_5214761f-d976-4eea-868d-923337ee26be.wav"
+    },
+    {
+      "id": "e8f5a446-06de-404f-a869-24472920ef16",
+      "timestamp": "2025-10-26T15:39:43.676134",
+      "user_message": "Reformat this text to be more professional and clear",
+      "ai_response": "Okay, here’s a more professional and clear version of your request:\n\n“I’m seeking assistance in developing a script for a cinematic scene: a battle between opposing forces – Good and Evil – taking place on a unique Antarctic island. This island features a volcanic landscape intertwined with arctic conditions, creating a visually striking environment with areas of intense, fiery activity alongside snowy, cold zones. I’m looking for a detailed story concept to support this dramatic encounter between legendary figures.”",
+      "context": " So hello buddy, Myself Satyam Yadav and I am here for generating a script for a movie scene. Fight between Good and Evil on the Antarctica and volcanic land. Means the island is related to the fire. Fire and Arctic. Some like loofy fires. So island is half cold with the fire and half cold with the snow. Fighting between two legends on that island. I need the story around it.",
+      "model": "gemma3:4b",
+      "voice": "default",
+      "tts_file": "tts_0218b414-9bbc-4998-af6e-d8c29b6a8c7b.wav"
+    },
+    {
+      "id": "d4da3de5-3c58-4199-99d5-55c5ac148de2",
+      "timestamp": "2025-10-26T15:37:55.383363",
+      "user_message": "Reformat this text to be more professional and clear",
+      "ai_response": "Good day, how are you?\n",
+      "context": " Good day buddy, how are you? I hope you are doing great.",
+      "model": "gemma3:270m",
+      "voice": "default",
+      "tts_file": "tts_0f32094f-fbfd-4f64-9b69-171ce3de7a0c.wav"
+    },
+    {
+      "id": "33c6ef73-6a36-4cbe-8166-5c0797e7705a",
+      "timestamp": "2025-10-26T15:23:37.392790",
+      "user_message": "Reformat this text to be more professional and clear",
+      "ai_response": "Subject: Checking In\n\nDear [Recipient Name],\n\nI hope this email finds you well. \n\nSincerely,\n\n[Your Name]",
+      "context": " Good day buddy, how are you? I hope you are doing great.",
+      "model": "gemma3:4b",
+      "voice": "default",
+      "tts_file": "tts_20247d3d-9b70-49e2-95e2-13d42e0992eb.wav"
+    },
+    {
+      "id": "53b3cd6b-eed9-46d0-8be7-9c3b4529d641",
+      "timestamp": "2025-10-26T15:23:27.464209",
+      "user_message": "Reformat this text to be more professional and clear",
+      "ai_response": "Subject: Checking In\n\nDear [Recipient Name],\n\nI hope this email finds you well. \n\nSincerely,\n\n[Your Name]",
+      "context": " Good day buddy, how are you? I hope you are doing great.",
+      "model": "gemma3:4b",
+      "voice": "default",
+      "tts_file": "tts_25f814fe-dde6-4460-a3f8-aa4087442cf5.wav"
+    },
+    {
+      "id": "0dde1a58-8c82-4a2f-9120-906e5b39e27d",
+      "timestamp": "2025-10-26T15:22:58.603026",
+      "user_message": "Reformat this text to be more professional and clear",
+      "ai_response": "Good day. I hope you are doing well.",
+      "context": " Good day buddy, how are you? I hope you are doing great.",
+      "model": "gemma3:4b",
+      "voice": "default",
+      "tts_file": "tts_c08b7322-ad69-4b2d-b726-a7f0e66cb517.wav"
+    },
+    {
+      "id": "3b40e71f-ab8d-4be4-b150-dc0f5b2a5cb1",
+      "timestamp": "2025-10-26T15:22:14.066227",
+      "user_message": "Reformat this text to be more professional and clear",
+      "ai_response": "Good day. I hope you are doing well.",
+      "context": " Good day buddy, how are you? I hope you are doing great.",
+      "model": "gemma3:4b",
+      "voice": "default",
+      "tts_file": "tts_0e53144a-6e46-4471-b86d-1c1fcf3f2142.wav"
+    },
+    {
       "id": "9fae2e91-9c8f-4262-88b1-d8ba0274f9dc",
       "timestamp": "2025-10-26T13:21:40.122507",
       "user_message": "Reformat this text to be more professional and clear",

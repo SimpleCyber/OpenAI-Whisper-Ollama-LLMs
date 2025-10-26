@@ -5,14 +5,18 @@ import json
 from datetime import datetime
 import uuid
 import requests
+import torchaudio as ta
+from chatterbox.tts import ChatterboxTTS
 
 app = Flask(__name__)
 UPLOAD_FOLDER = "recordings"
 AUDIO_FOLDER = os.path.join(UPLOAD_FOLDER, "audio")
+TTS_FOLDER = os.path.join(UPLOAD_FOLDER, "tts")
 HISTORY_FILE = os.path.join(UPLOAD_FOLDER, "history.json")
 CHAT_HISTORY_FILE = os.path.join(UPLOAD_FOLDER, "chat_history.json")
 
 os.makedirs(AUDIO_FOLDER, exist_ok=True)
+os.makedirs(TTS_FOLDER, exist_ok=True)
 
 # Model cache
 model_cache = r"D:\whisper_models"
@@ -23,7 +27,20 @@ loaded_models = {}
 
 # Ollama configuration
 OLLAMA_API_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "gemma3:4b"  # Using your installed model
+AVAILABLE_OLLAMA_MODELS = ["gemma3:4b", "gemma3:270m"]
+
+# Initialize Chatterbox TTS (load once)
+print("🔊 Loading Chatterbox TTS model...")
+tts_model = ChatterboxTTS.from_pretrained(device="cpu")  # Change to "cuda" if GPU available
+print("✅ TTS model loaded successfully")
+
+# Available TTS voices (Chatterbox supports multiple speakers)
+AVAILABLE_VOICES = {
+    "default": {"name": "Default Voice", "speaker_id": 0},
+    "voice1": {"name": "Voice 1", "speaker_id": 1},
+    "voice2": {"name": "Voice 2", "speaker_id": 2},
+    "voice3": {"name": "Voice 3", "speaker_id": 3},
+}
 
 def get_model(model_name):
     """Load and cache Whisper models"""
@@ -57,7 +74,7 @@ def save_chat_history(chat_history):
     with open(CHAT_HISTORY_FILE, 'w', encoding='utf-8') as f:
         json.dump(chat_history, f, indent=2, ensure_ascii=False)
 
-def query_ollama(prompt, context=""):
+def query_ollama(prompt, context="", model="gemma3:4b"):
     """Query Ollama API with streaming disabled for simplicity"""
     try:
         system_prompt = """You are a helpful AI assistant. You can:
@@ -73,7 +90,7 @@ Be concise, helpful, and professional."""
         full_prompt += f"User request: {prompt}"
 
         payload = {
-            "model": OLLAMA_MODEL,
+            "model": model,
             "prompt": full_prompt,
             "stream": False
         }
@@ -85,6 +102,24 @@ Be concise, helpful, and professional."""
             return f"Error: Ollama API returned status {response.status_code}"
     except Exception as e:
         return f"Error connecting to Ollama: {str(e)}"
+
+def generate_tts(text, voice="default"):
+    """Generate TTS audio from text"""
+    try:
+        # Generate audio
+        wav = tts_model.generate(text)
+        
+        # Create unique filename
+        tts_filename = f"tts_{uuid.uuid4()}.wav"
+        tts_path = os.path.join(TTS_FOLDER, tts_filename)
+        
+        # Save audio file
+        ta.save(tts_path, wav, tts_model.sr)
+        
+        return tts_path, tts_filename
+    except Exception as e:
+        print(f"Error generating TTS: {str(e)}")
+        return None, None
 
 @app.route('/')
 def index():
@@ -174,19 +209,28 @@ def delete_recording(recording_id):
     else:
         return jsonify({"success": False, "error": "Recording not found"}), 404
 
-# New AI Chat endpoints
+# AI Chat endpoints
 @app.route('/ai/chat', methods=['POST'])
 def ai_chat():
     """Handle AI chat requests (text or voice)"""
     data = request.json
     user_message = data.get('message', '')
-    context = data.get('context', '')  # Optional: transcription to reformat
+    context = data.get('context', '')
+    ollama_model = data.get('model', 'gemma3:4b')
+    voice = data.get('voice', 'default')
+    enable_tts = data.get('enable_tts', True)
     
     if not user_message:
         return jsonify({"error": "No message provided"}), 400
     
     # Query Ollama
-    ai_response = query_ollama(user_message, context)
+    ai_response = query_ollama(user_message, context, ollama_model)
+    
+    # Generate TTS if enabled
+    tts_path = None
+    tts_filename = None
+    if enable_tts:
+        tts_path, tts_filename = generate_tts(ai_response, voice)
     
     # Save to chat history
     chat_history = load_chat_history()
@@ -195,14 +239,19 @@ def ai_chat():
         "timestamp": datetime.now().isoformat(),
         "user_message": user_message,
         "ai_response": ai_response,
-        "context": context
+        "context": context,
+        "model": ollama_model,
+        "voice": voice,
+        "tts_file": tts_filename if tts_filename else None
     }
     chat_history["chats"].insert(0, chat_entry)
     save_chat_history(chat_history)
     
     return jsonify({
         "response": ai_response,
-        "id": chat_entry["id"]
+        "id": chat_entry["id"],
+        "tts_file": tts_filename,
+        "tts_url": f"/tts/{tts_filename}" if tts_filename else None
     })
 
 @app.route('/ai/chat/history', methods=['GET'])
@@ -216,15 +265,65 @@ def reformat_recording(recording_id):
     """Reformat a specific recording's transcription"""
     data = request.json
     instruction = data.get('instruction', 'Reformat this text to be more professional and clear')
+    ollama_model = data.get('model', 'gemma3:4b')
+    voice = data.get('voice', 'default')
+    enable_tts = data.get('enable_tts', True)
     
     history = load_history()
     for recording in history["recordings"]:
         if recording["id"] == recording_id:
             transcription = recording["transcription"]
-            ai_response = query_ollama(instruction, transcription)
-            return jsonify({"response": ai_response})
+            ai_response = query_ollama(instruction, transcription, ollama_model)
+            
+            # Generate TTS if enabled
+            tts_path = None
+            tts_filename = None
+            if enable_tts:
+                tts_path, tts_filename = generate_tts(ai_response, voice)
+            
+            return jsonify({
+                "response": ai_response,
+                "tts_file": tts_filename,
+                "tts_url": f"/tts/{tts_filename}" if tts_filename else None
+            })
     
     return jsonify({"error": "Recording not found"}), 404
+
+@app.route('/tts/<filename>', methods=['GET'])
+def serve_tts(filename):
+    """Serve TTS audio files"""
+    tts_path = os.path.join(TTS_FOLDER, filename)
+    if os.path.exists(tts_path):
+        return send_file(tts_path, mimetype='audio/wav')
+    return jsonify({"error": "TTS file not found"}), 404
+
+@app.route('/ai/models', methods=['GET'])
+def get_available_models():
+    """Get available Ollama models"""
+    return jsonify({
+        "ollama_models": AVAILABLE_OLLAMA_MODELS,
+        "voices": AVAILABLE_VOICES
+    })
+
+@app.route('/ai/speak', methods=['POST'])
+def speak_text():
+    """Generate TTS for arbitrary text"""
+    data = request.json
+    text = data.get('text', '')
+    voice = data.get('voice', 'default')
+    
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+    
+    tts_path, tts_filename = generate_tts(text, voice)
+    
+    if tts_filename:
+        return jsonify({
+            "tts_file": tts_filename,
+            "tts_url": f"/tts/{tts_filename}"
+        })
+    else:
+        return jsonify({"error": "Failed to generate TTS"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)

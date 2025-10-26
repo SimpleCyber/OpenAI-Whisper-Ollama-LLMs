@@ -1,6 +1,26 @@
 {
   "recordings": [
     {
+      "id": "48e81eda-d328-4b7a-b2a4-35dcbb960a00",
+      "filename": "recording_20251026_152801.wav",
+      "audio_path": "recordings\\audio\\recording_20251026_152801.wav",
+      "transcription": " So hello buddy, Myself Satyam Yadav and I am here for generating a script for a movie scene. Fight between Good and Evil on the Antarctica and volcanic land. Means the island is related to the fire. Fire and Arctic. Some like loofy fires. So island is half cold with the fire and half cold with the snow. Fighting between two legends on that island. I need the story around it.",
+      "timestamp": "2025-10-26T15:28:01.419480",
+      "duration": "0:35",
+      "language": "en",
+      "model": "small"
+    },
+    {
+      "id": "b43ebbe9-54e5-41c8-9cd8-c66b76253e00",
+      "filename": "recording_20251026_151848.wav",
+      "audio_path": "recordings\\audio\\recording_20251026_151848.wav",
+      "transcription": " Good day buddy, how are you? I hope you are doing great.",
+      "timestamp": "2025-10-26T15:18:48.974490",
+      "duration": "0:06",
+      "language": "en",
+      "model": "small"
+    },
+    {
       "id": "c250a20a-2d6c-4f00-8491-2f1fb8334c4e",
       "filename": "recording_20251026_132048.wav",
       "audio_path": "recordings\\audio\\recording_20251026_132048.wav",

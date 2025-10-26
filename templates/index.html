@@ -45,6 +45,18 @@
         transform: translateY(0);
       }
     }
+    .audio-player-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 60;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease-in-out;
+    }
+    .audio-player-bar.show {
+      transform: translateY(0);
+    }
   </style>
   <script>
     tailwind.config = {
@@ -54,6 +66,27 @@
 </head>
 <body class="min-h-screen relative overflow-hidden">
   
+  <!-- Audio Player Bar -->
+  <div id="audioPlayerBar" class="audio-player-bar bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg">
+    <div class="container mx-auto px-6 py-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-volume-up text-lg"></i>
+          <span class="text-sm font-medium">AI Response</span>
+          <span id="audioStatus" class="text-xs opacity-80">Playing...</span>
+        </div>
+        <div class="flex items-center gap-4">
+          <button id="stopAudioBtn" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
+            <i class="fas fa-stop text-sm"></i>
+          </button>
+          <button id="closeAudioBar" class="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors">
+            <i class="fas fa-times text-sm"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Aurora Background (Light Mode) -->
   <div class="aurora-bg dark:hidden absolute inset-0 z-0"></div>
   
@@ -89,13 +122,34 @@
     <div id="chatSidebar" class="sidebar-transition fixed right-0 top-0 h-full w-96 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-md border-l border-neutral-200/50 dark:border-neutral-700 shadow-lg z-50 translate-x-full">
       <div class="flex flex-col h-full">
         <div class="p-6 border-b border-neutral-200/50 dark:border-neutral-700">
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex items-center justify-between mb-3">
             <h2 class="text-lg font-medium text-neutral-800 dark:text-neutral-100">AI Assistant</h2>
             <button id="closeChatSidebar" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
               <i class="fas fa-times"></i>
             </button>
           </div>
-          <p class="text-xs text-neutral-500 dark:text-neutral-400">Reformat or generate content</p>
+          
+          <!-- AI Settings -->
+          <div class="space-y-2">
+            <div class="flex items-center gap-2">
+              <select id="ollamaModelSelect" class="flex-1 px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 text-xs text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option value="gemma3:4b">Gemma 3 - 4B (Better Quality)</option>
+                <option value="gemma3:270m">Gemma 3 - 270M (Faster)</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400 cursor-pointer">
+                <input type="checkbox" id="enableTTS" checked class="rounded">
+                <span>Enable Voice Response</span>
+              </label>
+              <select id="voiceSelect" class="px-3 py-1.5 rounded-lg bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 text-xs text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <option value="default">Default Voice</option>
+                <option value="voice1">Voice 1</option>
+                <option value="voice2">Voice 2</option>
+                <option value="voice3">Voice 3</option>
+              </select>
+            </div>
+          </div>
         </div>
         
         <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
@@ -240,6 +294,9 @@
     </div>
   </div>
 
+  <!-- Hidden Audio Element -->
+  <audio id="ttsAudio" style="display:none;"></audio>
+
   <script>
     let mediaRecorder;
     let audioChunks = [];
@@ -247,10 +304,14 @@
     let timerInterval;
     let isDark = localStorage.getItem('theme') === 'dark';
     let selectedModel = localStorage.getItem('whisperModel') || 'small';
+    let selectedOllamaModel = localStorage.getItem('ollamaModel') || 'gemma3:4b';
+    let selectedVoice = localStorage.getItem('ttsVoice') || 'default';
+    let enableTTS = localStorage.getItem('enableTTS') !== 'false';
     let currentTranscription = '';
     let isVoiceInput = false;
     let voiceMediaRecorder;
     let voiceAudioChunks = [];
+    let currentAudio = null;
 
     const startBtn = document.getElementById("startBtn");
     const pauseBtn = document.getElementById("pauseBtn");
@@ -275,6 +336,9 @@
     const closeChatSidebar = document.getElementById("closeChatSidebar");
     const themeToggle = document.getElementById("themeToggle");
     const modelSelect = document.getElementById("modelSelect");
+    const ollamaModelSelect = document.getElementById("ollamaModelSelect");
+    const voiceSelect = document.getElementById("voiceSelect");
+    const enableTTSCheckbox = document.getElementById("enableTTS");
     const historyList = document.getElementById("historyList");
     const detailModal = document.getElementById("detailModal");
     const closeModal = document.getElementById("closeModal");
@@ -284,6 +348,57 @@
     const sendChatBtn = document.getElementById("sendChatBtn");
     const voiceInputBtn = document.getElementById("voiceInputBtn");
     const chatMessages = document.getElementById("chatMessages");
+
+    const audioPlayerBar = document.getElementById("audioPlayerBar");
+    const audioStatus = document.getElementById("audioStatus");
+    const stopAudioBtn = document.getElementById("stopAudioBtn");
+    const closeAudioBar = document.getElementById("closeAudioBar");
+    const ttsAudio = document.getElementById("ttsAudio");
+
+    // Audio Player Controls
+    function showAudioPlayer() {
+      audioPlayerBar.classList.add('show');
+    }
+
+    function hideAudioPlayer() {
+      audioPlayerBar.classList.remove('show');
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio = null;
+      }
+    }
+
+    function playTTS(url) {
+      if (currentAudio) {
+        currentAudio.pause();
+      }
+      
+      currentAudio = new Audio(url);
+      showAudioPlayer();
+      audioStatus.textContent = 'Playing...';
+      
+      currentAudio.play();
+      
+      currentAudio.onended = () => {
+        audioStatus.textContent = 'Finished';
+        setTimeout(hideAudioPlayer, 2000);
+      };
+      
+      currentAudio.onerror = () => {
+        audioStatus.textContent = 'Error playing audio';
+        setTimeout(hideAudioPlayer, 2000);
+      };
+    }
+
+    stopAudioBtn.onclick = () => {
+      if (currentAudio) {
+        currentAudio.pause();
+        audioStatus.textContent = 'Stopped';
+        setTimeout(hideAudioPlayer, 1000);
+      }
+    };
+
+    closeAudioBar.onclick = hideAudioPlayer;
 
     // Theme Toggle
     function updateTheme() {
@@ -308,6 +423,24 @@
     modelSelect.onchange = (e) => {
       selectedModel = e.target.value;
       localStorage.setItem('whisperModel', selectedModel);
+    };
+
+    ollamaModelSelect.value = selectedOllamaModel;
+    ollamaModelSelect.onchange = (e) => {
+      selectedOllamaModel = e.target.value;
+      localStorage.setItem('ollamaModel', selectedOllamaModel);
+    };
+
+    voiceSelect.value = selectedVoice;
+    voiceSelect.onchange = (e) => {
+      selectedVoice = e.target.value;
+      localStorage.setItem('ttsVoice', selectedVoice);
+    };
+
+    enableTTSCheckbox.checked = enableTTS;
+    enableTTSCheckbox.onchange = (e) => {
+      enableTTS = e.target.checked;
+      localStorage.setItem('enableTTS', enableTTS);
     };
 
     // Sidebar Toggle
@@ -466,7 +599,7 @@
     }
 
     // Chat Functions
-    function addChatMessage(role, message) {
+    function addChatMessage(role, message, ttsUrl = null) {
       const messageDiv = document.createElement('div');
       messageDiv.className = `chat-message ${role === 'user' ? 'ml-8' : 'mr-8'}`;
       
@@ -477,11 +610,21 @@
           </div>
         `;
       } else {
+        const playButton = ttsUrl ? `
+          <button onclick="playTTS('${ttsUrl}')" class="mt-2 px-3 py-1 bg-purple-500 hover:bg-purple-600 text-white text-xs rounded-full transition-colors flex items-center gap-1">
+            <i class="fas fa-volume-up"></i>
+            <span>Play Audio</span>
+          </button>
+        ` : '';
+        
         messageDiv.innerHTML = `
           <div class="bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-100 rounded-2xl rounded-tl-sm p-4 shadow-sm">
             <div class="flex items-start gap-2">
               <i class="fas fa-robot text-purple-500 mt-1"></i>
-              <p class="text-sm leading-relaxed flex-1">${message}</p>
+              <div class="flex-1">
+                <p class="text-sm leading-relaxed">${message}</p>
+                ${playButton}
+              </div>
             </div>
           </div>
         `;
@@ -502,7 +645,13 @@
         const response = await fetch('/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, context })
+          body: JSON.stringify({ 
+            message, 
+            context,
+            model: selectedOllamaModel,
+            voice: selectedVoice,
+            enable_tts: enableTTS
+          })
         });
         
         const data = await response.json();
@@ -511,7 +660,12 @@
         chatMessages.removeChild(chatMessages.lastChild);
         
         // Add AI response
-        addChatMessage('assistant', data.response);
+        addChatMessage('assistant', data.response, data.tts_url);
+        
+        // Auto-play if TTS is enabled
+        if (enableTTS && data.tts_url) {
+          playTTS(data.tts_url);
+        }
       } catch (error) {
         console.error('Error sending to AI:', error);
         chatMessages.removeChild(chatMessages.lastChild);
@@ -539,14 +693,12 @@
     // Voice input for chat
     voiceInputBtn.onclick = async () => {
       if (isVoiceInput) {
-        // Stop recording
         voiceMediaRecorder.stop();
         isVoiceInput = false;
         voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
         voiceInputBtn.classList.remove('bg-red-500', 'dark:bg-red-600');
         voiceInputBtn.classList.add('bg-neutral-200', 'dark:bg-neutral-700');
       } else {
-        // Start recording
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           voiceMediaRecorder = new MediaRecorder(stream);
@@ -565,7 +717,6 @@
             const response = await fetch('/upload', { method: 'POST', body: formData });
             const data = await response.json();
 
-            // Remove loading message
             chatMessages.removeChild(chatMessages.lastChild);
 
             if (data.transcription) {
