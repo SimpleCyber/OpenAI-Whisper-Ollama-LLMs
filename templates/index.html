@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voice Recorder with Transcription</title>
+  <title>Voice Recorder with AI Assistant</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -32,6 +32,19 @@
         radial-gradient(circle at 80% 70%, rgba(199,210,254,0.4) 0%, transparent 50%),
         radial-gradient(circle at 40% 80%, rgba(224,231,255,0.3) 0%, transparent 60%);
     }
+    .chat-message {
+      animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
   <script>
     tailwind.config = {
@@ -53,7 +66,6 @@
     <!-- Sidebar -->
     <div id="sidebar" class="sidebar-transition fixed left-0 top-0 h-full w-80 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-md border-r border-neutral-200/50 dark:border-neutral-700 shadow-lg z-50 -translate-x-full">
       <div class="flex flex-col h-full">
-        <!-- Sidebar Header -->
         <div class="p-6 border-b border-neutral-200/50 dark:border-neutral-700">
           <div class="flex items-center justify-between mb-2">
             <h2 class="text-lg font-medium text-neutral-800 dark:text-neutral-100">Recording History</h2>
@@ -64,11 +76,49 @@
           <p class="text-xs text-neutral-500 dark:text-neutral-400">Your saved recordings</p>
         </div>
         
-        <!-- History List -->
         <div id="historyList" class="flex-1 overflow-y-auto p-4">
           <div class="text-center text-neutral-400 dark:text-neutral-500 py-8">
             <i class="fas fa-history text-3xl mb-2"></i>
             <p class="text-sm">No recordings yet</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Chat Sidebar -->
+    <div id="chatSidebar" class="sidebar-transition fixed right-0 top-0 h-full w-96 bg-white/95 dark:bg-neutral-800/95 backdrop-blur-md border-l border-neutral-200/50 dark:border-neutral-700 shadow-lg z-50 translate-x-full">
+      <div class="flex flex-col h-full">
+        <div class="p-6 border-b border-neutral-200/50 dark:border-neutral-700">
+          <div class="flex items-center justify-between mb-2">
+            <h2 class="text-lg font-medium text-neutral-800 dark:text-neutral-100">AI Assistant</h2>
+            <button id="closeChatSidebar" class="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <p class="text-xs text-neutral-500 dark:text-neutral-400">Reformat or generate content</p>
+        </div>
+        
+        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
+          <div class="text-center text-neutral-400 dark:text-neutral-500 py-8">
+            <i class="fas fa-robot text-3xl mb-2"></i>
+            <p class="text-sm">Ask me anything or reformat your transcriptions</p>
+          </div>
+        </div>
+
+        <div class="p-4 border-t border-neutral-200/50 dark:border-neutral-700">
+          <div class="flex gap-2">
+            <button id="voiceInputBtn" class="w-10 h-10 rounded-full bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-300 dark:hover:bg-neutral-600 flex items-center justify-center">
+              <i class="fas fa-microphone"></i>
+            </button>
+            <input 
+              type="text" 
+              id="chatInput" 
+              placeholder="Type your request..." 
+              class="flex-1 px-4 py-2 rounded-full bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 text-neutral-800 dark:text-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-400 dark:focus:ring-neutral-500"
+            />
+            <button id="sendChatBtn" class="w-10 h-10 rounded-full bg-neutral-800 dark:bg-neutral-700 text-white hover:bg-neutral-900 dark:hover:bg-neutral-600 flex items-center justify-center">
+              <i class="fas fa-paper-plane"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -80,29 +130,23 @@
     <!-- Main Content -->
     <div class="min-h-screen flex flex-col">
       
-      <!-- Top Controls (Integrated) -->
+      <!-- Top Controls -->
       <div class="px-6 py-6 flex items-center justify-between">
         <button id="toggleSidebar" class="w-10 h-10 rounded-full bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 text-neutral-700 dark:text-neutral-300 hover:bg-white/80 dark:hover:bg-neutral-800/80 transition-colors flex items-center justify-center shadow-sm">
           <i class="fas fa-bars"></i>
         </button>
         
         <div class="flex items-center gap-3">
-          <!-- Model Selector -->
+          <button id="toggleChatSidebar" class="px-4 py-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center gap-2 shadow-sm">
+            <i class="fas fa-robot"></i>
+            <span class="text-sm font-medium">AI Assistant</span>
+          </button>
+
           <select id="modelSelect" class="px-4 py-2 rounded-full bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 text-sm text-neutral-700 dark:text-neutral-300 focus:outline-none focus:ring-2 focus:ring-neutral-400/50 transition-colors shadow-sm">
-            <!--  <option value="tiny.en">Tiny EN</option>
-            <option value="tiny">Tiny</option>
-            <option value="base.en">Base EN</option>
-            <option value="base">Base</option>
-            <option value="small.en">Small EN</option>
+            <option value="tiny.en">Tiny EN</option>
             <option value="small" selected>Small</option>
-            <option value="medium.en">Medium EN</option> -->
-
-             <option value="tiny.en">Tiny EN</option>
-             <option value="small" selected>Small</option>
-
           </select>
 
-          <!-- Theme Toggle -->
           <button id="themeToggle" class="w-10 h-10 rounded-full bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 text-neutral-700 dark:text-neutral-300 hover:bg-white/80 dark:hover:bg-neutral-800/80 transition-colors flex items-center justify-center shadow-sm">
             <i class="fas fa-moon dark:hidden"></i>
             <i class="fas fa-sun hidden dark:inline"></i>
@@ -114,21 +158,17 @@
       <div class="flex-1 flex items-center justify-center p-6 -mt-20">
         <div class="max-w-xl w-full">
           
-          <!-- Header -->
           <div class="text-center mb-12">
             <h1 class="text-3xl font-light text-neutral-800 dark:text-neutral-100 mb-2">Voice Recorder</h1>
-            <p class="text-sm text-neutral-500 dark:text-neutral-400">Record and transcribe audio</p>
+            <p class="text-sm text-neutral-500 dark:text-neutral-400">Record, transcribe, and enhance with AI</p>
           </div>
 
-          <!-- Main Control Area -->
           <div class="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-md rounded-2xl shadow-lg border border-neutral-200/50 dark:border-neutral-700/50 p-10">
             
-            <!-- Timer Display -->
             <div id="timer" class="hidden text-center mb-8">
               <span class="text-6xl font-light text-neutral-800 dark:text-neutral-100 tracking-tight">00:00</span>
             </div>
 
-            <!-- Status Indicator -->
             <div id="status" class="text-center mb-8 h-6">
               <div id="idleStatus" class="flex items-center justify-center gap-2 text-neutral-400 dark:text-neutral-500">
                 <i class="fas fa-microphone text-sm"></i>
@@ -148,44 +188,40 @@
               </div>
             </div>
 
-            <!-- Control Buttons -->
             <div class="flex items-center justify-center gap-4">
-              
-              <!-- Start Button -->
               <button id="startBtn" class="w-16 h-16 rounded-full bg-neutral-800 dark:bg-neutral-700 text-white hover:bg-neutral-900 dark:hover:bg-neutral-600 transition-all duration-200 flex items-center justify-center shadow-md hover:shadow-lg">
                 <i class="fas fa-microphone text-xl"></i>
               </button>
 
-              <!-- Pause Button -->
               <button id="pauseBtn" disabled class="hidden w-12 h-12 rounded-full bg-amber-500 text-white hover:bg-amber-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg">
                 <i class="fas fa-pause"></i>
               </button>
 
-              <!-- Resume Button -->
               <button id="resumeBtn" disabled class="hidden w-12 h-12 rounded-full bg-green-500 text-white hover:bg-green-600 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg">
                 <i class="fas fa-play text-sm"></i>
               </button>
 
-              <!-- Stop Button -->
               <button id="stopBtn" disabled class="hidden w-12 h-12 rounded-full bg-neutral-300 dark:bg-neutral-600 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-400 dark:hover:bg-neutral-500 transition-all duration-200 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed shadow-md hover:shadow-lg">
                 <i class="fas fa-stop"></i>
               </button>
-
             </div>
-
           </div>
 
-          <!-- Transcription Box -->
           <div id="transcriptionBox" class="hidden mt-6">
             <div class="bg-white/60 dark:bg-neutral-800/60 backdrop-blur-md rounded-2xl shadow-lg border border-neutral-200/50 dark:border-neutral-700/50 p-8">
-              <div class="flex items-center gap-2 mb-4 text-neutral-700 dark:text-neutral-300">
-                <i class="fas fa-align-left text-sm"></i>
-                <h3 class="text-sm font-medium uppercase tracking-wide">Transcription</h3>
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2 text-neutral-700 dark:text-neutral-300">
+                  <i class="fas fa-align-left text-sm"></i>
+                  <h3 class="text-sm font-medium uppercase tracking-wide">Transcription</h3>
+                </div>
+                <button id="enhanceBtn" class="px-3 py-1 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xs hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center gap-1">
+                  <i class="fas fa-magic"></i>
+                  <span>Enhance with AI</span>
+                </button>
               </div>
               <div id="transcription" class="text-neutral-600 dark:text-neutral-400 leading-relaxed whitespace-pre-wrap"></div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -211,6 +247,10 @@
     let timerInterval;
     let isDark = localStorage.getItem('theme') === 'dark';
     let selectedModel = localStorage.getItem('whisperModel') || 'small';
+    let currentTranscription = '';
+    let isVoiceInput = false;
+    let voiceMediaRecorder;
+    let voiceAudioChunks = [];
 
     const startBtn = document.getElementById("startBtn");
     const pauseBtn = document.getElementById("pauseBtn");
@@ -219,6 +259,7 @@
     const transcriptionDiv = document.getElementById("transcription");
     const transcriptionBox = document.getElementById("transcriptionBox");
     const timer = document.getElementById("timer");
+    const enhanceBtn = document.getElementById("enhanceBtn");
     
     const idleStatus = document.getElementById("idleStatus");
     const recordingStatus = document.getElementById("recordingStatus");
@@ -226,15 +267,23 @@
     const processingStatus = document.getElementById("processingStatus");
 
     const sidebar = document.getElementById("sidebar");
+    const chatSidebar = document.getElementById("chatSidebar");
     const overlay = document.getElementById("overlay");
     const toggleSidebar = document.getElementById("toggleSidebar");
     const closeSidebar = document.getElementById("closeSidebar");
+    const toggleChatSidebar = document.getElementById("toggleChatSidebar");
+    const closeChatSidebar = document.getElementById("closeChatSidebar");
     const themeToggle = document.getElementById("themeToggle");
     const modelSelect = document.getElementById("modelSelect");
     const historyList = document.getElementById("historyList");
     const detailModal = document.getElementById("detailModal");
     const closeModal = document.getElementById("closeModal");
     const modalContent = document.getElementById("modalContent");
+    
+    const chatInput = document.getElementById("chatInput");
+    const sendChatBtn = document.getElementById("sendChatBtn");
+    const voiceInputBtn = document.getElementById("voiceInputBtn");
+    const chatMessages = document.getElementById("chatMessages");
 
     // Theme Toggle
     function updateTheme() {
@@ -264,6 +313,7 @@
     // Sidebar Toggle
     toggleSidebar.onclick = () => {
       sidebar.classList.remove('-translate-x-full');
+      chatSidebar.classList.add('translate-x-full');
       overlay.classList.remove('hidden');
       loadHistory();
     };
@@ -273,30 +323,43 @@
       overlay.classList.add('hidden');
     };
 
-    overlay.onclick = () => {
+    // Chat Sidebar Toggle
+    toggleChatSidebar.onclick = () => {
+      chatSidebar.classList.remove('translate-x-full');
       sidebar.classList.add('-translate-x-full');
+      overlay.classList.remove('hidden');
+    };
+
+    closeChatSidebar.onclick = () => {
+      chatSidebar.classList.add('translate-x-full');
       overlay.classList.add('hidden');
     };
 
+    overlay.onclick = () => {
+      sidebar.classList.add('-translate-x-full');
+      chatSidebar.classList.add('translate-x-full');
+      overlay.classList.add('hidden');
+    };
+
+    // Delete Recording
     async function deleteRecording(id, event) {
-  event.stopPropagation(); // Prevent opening detail modal
-  if (!confirm('Are you sure you want to delete this recording?')) return;
+      event.stopPropagation();
+      if (!confirm('Are you sure you want to delete this recording?')) return;
 
-  try {
-    const response = await fetch(`/delete/${id}`, { method: 'DELETE' });
-    const data = await response.json();
-    if (data.success) {
-      alert('Recording deleted successfully');
-      loadHistory();
-    } else {
-      alert(data.error || 'Failed to delete recording');
+      try {
+        const response = await fetch(`/delete/${id}`, { method: 'DELETE' });
+        const data = await response.json();
+        if (data.success) {
+          alert('Recording deleted successfully');
+          loadHistory();
+        } else {
+          alert(data.error || 'Failed to delete recording');
+        }
+      } catch (err) {
+        console.error('Error deleting recording:', err);
+        alert('Error deleting recording');
+      }
     }
-  } catch (err) {
-    console.error('Error deleting recording:', err);
-    alert('Error deleting recording');
-  }
-}
-
 
     // Load History
     async function loadHistory() {
@@ -306,21 +369,21 @@
         
         if (data.recordings && data.recordings.length > 0) {
           historyList.innerHTML = data.recordings.map(recording => `
-  <div class="mb-3 p-4 bg-gray-200 dark:bg-gray-100/5 rounded-lg hover:border dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors flex justify-between items-start">
-    <div class="flex-1 cursor-pointer" onclick="showDetail('${recording.id}')">
-      <div class="text-sm font-medium text-neutral-800 dark:text-neutral-100 mb-1">${recording.filename}</div>
-      <div class="text-xs text-neutral-500 dark:text-neutral-400">${new Date(recording.timestamp).toLocaleString()}</div>
-      <div class="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2 mb-2">${recording.transcription}</div>
-      <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
-        <span><i class="fas fa-clock mr-1"></i>${recording.duration}</span>
-        <span><i class="fas fa-brain mr-1"></i>${recording.model}</span>
-      </div>
-    </div>
-    <button onclick="deleteRecording('${recording.id}', event)" class="ml-3 text-red-300 hover:text-red-700">
-      <i class="fas fa-trash-alt"></i>
-    </button>
-  </div>
-`).join('');
+            <div class="mb-3 p-4 bg-gray-200 dark:bg-gray-100/5 rounded-lg hover:border dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors flex justify-between items-start">
+              <div class="flex-1 cursor-pointer" onclick="showDetail('${recording.id}')">
+                <div class="text-sm font-medium text-neutral-800 dark:text-neutral-100 mb-1">${recording.filename}</div>
+                <div class="text-xs text-neutral-500 dark:text-neutral-400">${new Date(recording.timestamp).toLocaleString()}</div>
+                <div class="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-2 mb-2">${recording.transcription}</div>
+                <div class="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  <span><i class="fas fa-clock mr-1"></i>${recording.duration}</span>
+                  <span><i class="fas fa-brain mr-1"></i>${recording.model}</span>
+                </div>
+              </div>
+              <button onclick="deleteRecording('${recording.id}', event)" class="ml-3 text-red-300 hover:text-red-700">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          `).join('');
         } else {
           historyList.innerHTML = `
             <div class="text-center text-neutral-400 dark:text-neutral-500 py-8">
@@ -365,10 +428,6 @@
               <p class="text-neutral-800 dark:text-neutral-100 mt-1">${recording.language}</p>
             </div>
             <div>
-              <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Audio File</label>
-              <p class="text-neutral-800 dark:text-neutral-100 mt-1 text-sm break-all">${recording.audio_path}</p>
-            </div>
-            <div>
               <label class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Transcription</label>
               <div class="mt-2 p-4 bg-neutral-50 dark:bg-neutral-700 rounded-lg text-neutral-700 dark:text-neutral-300 leading-relaxed">${recording.transcription}</div>
             </div>
@@ -376,6 +435,9 @@
               <a href="/download/${recording.id}" class="flex-1 text-center px-4 py-2 bg-neutral-800 dark:bg-neutral-700 text-white rounded-lg hover:bg-neutral-900 dark:hover:bg-neutral-600 transition-colors">
                 <i class="fas fa-download mr-2"></i>Download Audio
               </a>
+              <button onclick="reformatFromModal('${recording.id}')" class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors">
+                <i class="fas fa-magic mr-2"></i>Enhance with AI
+              </button>
             </div>
           </div>
         `;
@@ -390,6 +452,154 @@
       detailModal.classList.add('hidden');
     };
 
+    // Reformat from modal
+    async function reformatFromModal(id) {
+      detailModal.classList.add('hidden');
+      chatSidebar.classList.remove('translate-x-full');
+      overlay.classList.remove('hidden');
+      
+      const response = await fetch(`/recording/${id}`);
+      const recording = await response.json();
+      
+      addChatMessage('user', `Reformat this transcription: "${recording.transcription}"`);
+      await sendToAI('Reformat this text to be more professional and clear', recording.transcription);
+    }
+
+    // Chat Functions
+    function addChatMessage(role, message) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `chat-message ${role === 'user' ? 'ml-8' : 'mr-8'}`;
+      
+      if (role === 'user') {
+        messageDiv.innerHTML = `
+          <div class="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl rounded-tr-sm p-4 shadow-sm">
+            <p class="text-sm leading-relaxed">${message}</p>
+          </div>
+        `;
+      } else {
+        messageDiv.innerHTML = `
+          <div class="bg-neutral-100 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-100 rounded-2xl rounded-tl-sm p-4 shadow-sm">
+            <div class="flex items-start gap-2">
+              <i class="fas fa-robot text-purple-500 mt-1"></i>
+              <p class="text-sm leading-relaxed flex-1">${message}</p>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (chatMessages.children.length === 1 && chatMessages.children[0].classList.contains('text-center')) {
+        chatMessages.innerHTML = '';
+      }
+      
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    async function sendToAI(message, context = '') {
+      try {
+        addChatMessage('assistant', '<i class="fas fa-spinner fa-spin"></i> Thinking...');
+        
+        const response = await fetch('/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message, context })
+        });
+        
+        const data = await response.json();
+        
+        // Remove loading message
+        chatMessages.removeChild(chatMessages.lastChild);
+        
+        // Add AI response
+        addChatMessage('assistant', data.response);
+      } catch (error) {
+        console.error('Error sending to AI:', error);
+        chatMessages.removeChild(chatMessages.lastChild);
+        addChatMessage('assistant', '❌ Error connecting to AI assistant. Make sure Ollama is running.');
+      }
+    }
+
+    // Send chat message
+    sendChatBtn.onclick = async () => {
+      const message = chatInput.value.trim();
+      if (!message) return;
+      
+      addChatMessage('user', message);
+      chatInput.value = '';
+      
+      await sendToAI(message, currentTranscription);
+    };
+
+    chatInput.onkeypress = (e) => {
+      if (e.key === 'Enter') {
+        sendChatBtn.click();
+      }
+    };
+
+    // Voice input for chat
+    voiceInputBtn.onclick = async () => {
+      if (isVoiceInput) {
+        // Stop recording
+        voiceMediaRecorder.stop();
+        isVoiceInput = false;
+        voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        voiceInputBtn.classList.remove('bg-red-500', 'dark:bg-red-600');
+        voiceInputBtn.classList.add('bg-neutral-200', 'dark:bg-neutral-700');
+      } else {
+        // Start recording
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          voiceMediaRecorder = new MediaRecorder(stream);
+          voiceAudioChunks = [];
+
+          voiceMediaRecorder.ondataavailable = e => voiceAudioChunks.push(e.data);
+
+          voiceMediaRecorder.onstop = async () => {
+            const blob = new Blob(voiceAudioChunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio', blob, `voice_input_${Date.now()}.wav`);
+            formData.append('model', 'tiny.en');
+
+            addChatMessage('user', '<i class="fas fa-spinner fa-spin"></i> Transcribing...');
+
+            const response = await fetch('/upload', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            // Remove loading message
+            chatMessages.removeChild(chatMessages.lastChild);
+
+            if (data.transcription) {
+              addChatMessage('user', data.transcription);
+              await sendToAI(data.transcription, currentTranscription);
+            }
+
+            stream.getTracks().forEach(track => track.stop());
+          };
+
+          voiceMediaRecorder.start();
+          isVoiceInput = true;
+          voiceInputBtn.innerHTML = '<i class="fas fa-stop"></i>';
+          voiceInputBtn.classList.remove('bg-neutral-200', 'dark:bg-neutral-700');
+          voiceInputBtn.classList.add('bg-red-500', 'dark:bg-red-600');
+        } catch (err) {
+          alert('Microphone access denied');
+          console.error(err);
+        }
+      }
+    };
+
+    // Enhance current transcription
+    enhanceBtn.onclick = async () => {
+      if (!currentTranscription) return;
+      
+      chatSidebar.classList.remove('translate-x-full');
+      overlay.classList.remove('hidden');
+      
+      addChatMessage('user', `Reformat this: "${currentTranscription}"`);
+      await sendToAI('Reformat this text to be more professional and clear', currentTranscription);
+    };
+
+    // Recording functions
     function setStatus(status) {
       idleStatus.classList.add('hidden');
       recordingStatus.classList.add('hidden');
@@ -433,6 +643,7 @@
 
           if (data.transcription) {
             transcriptionDiv.textContent = data.transcription;
+            currentTranscription = data.transcription;
             setStatus('idle');
             loadHistory();
           } else {
